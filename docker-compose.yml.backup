@@ -1,0 +1,63 @@
+version: '3.8'
+
+services:
+  # PHP with Composer
+  php:
+    image: php:8.3-fpm
+    container_name: php-laravel
+    volumes:
+      - .:/var/www
+      - ./php/www.conf:/usr/local/etc/php-fpm.d/www.conf
+    working_dir: /var/www
+    networks:
+      - laravel
+    environment:
+      PHP_IDE_CONFIG: serverName=localhost
+      COMPOSER_ALLOW_SUPERUSER: "1"
+    depends_on:
+      - mysql
+      - redis
+    command: bash -c "apt-get update && apt-get install -y unzip git && curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer && composer install && php-fpm"
+
+  # Nginx to serve Laravel application
+  nginx:
+    image: nginx:latest
+    container_name: nginx
+    volumes:
+      - .:/var/www
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "8000:80"
+    depends_on:
+      - php
+    networks:
+      - laravel
+
+  # MySQL database server
+  mysql:
+    image: mysql:8
+    container_name: mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: laravel_db
+      MYSQL_PASSWORD: rootpassword
+    volumes:
+      - mysql_data:/var/lib/mysql
+    networks:
+      - laravel
+
+  # Redis caching server
+  redis:
+    image: redis:alpine
+    container_name: redis
+    networks:
+      - laravel
+
+networks:
+  laravel:
+    driver: bridge
+
+volumes:
+  mysql_data:
+    driver: local
+
