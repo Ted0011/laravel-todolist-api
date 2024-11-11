@@ -1,1 +1,11 @@
+name: CI/CD Pipeline for 
 
+on: [workflow_dispatch]
+
+jobs: 
+  build-and-deploy:
+    runs-on: self-hosted
+
+    steps:
+      - name: Checkout Repository
+        uses: action/checkout@v2
