@@ -6,10 +6,7 @@ jobs:
   laravel-tests:
     runs-on: self-hosted
 
-    steps:
-      - name: Checkout Repository
-        uses: action/checkout@v2
-    
+    steps:    
       - name: Copy .env
         run: php -r "file_exists('.env') || copy('.env.example', '.env');"
     
