@@ -42,9 +42,9 @@ jobs:
     - name: Deploy to Production
       run: |
         cd /var/www/laravel-todo
-        git init
-        git remote add origin https://github.com/Ted0011/laravel-todolist-api.git
-        git pull origin main
+        sudo git init
+        sudo git remote add origin https://github.com/Ted0011/laravel-todolist-api.git
+        sudo git pull origin main
         composer install --no-interaction --prefer-dist --optimize-autoloader --no-dev
         php artisan migrate --force
         php artisan config:cache
