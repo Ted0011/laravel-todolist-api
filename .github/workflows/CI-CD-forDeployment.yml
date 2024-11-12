@@ -36,7 +36,7 @@ jobs:
   deploy:
     needs: laravel-tests
     runs-on: self-hosted
-    if: github.ref == 'refs/heads/main'
+    # if: github.ref == 'refs/heads/main'
     
     steps:
     - name: Deploy to Production
