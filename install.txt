@@ -1,0 +1,86 @@
+#Update
+sudo apt update && sudo apt upgrade -y
+#deb package mysql
+wget https://dev.mysql.com/get/mysql-apt-config_0.8.30-1_all.deb
+sudo dpkg -i mysql-apt-config_0.8.30-1_all.deb
+
+#install php and nginx and required package
+sudo apt install software-properties-common ca-certificates lsb-release apt-transport-https -y
+sudo add-apt-repository ppa:ondrej/php
+apt-get install -y nginx php8.2-fpm php8.2-cli php8.2-mysql php8.2-xml php8.2-curl php8.2-mbstring php8.2-zip php8.2-bcmath php8.2-redis mysql-server redis-server git supervisor
+
+# Install Composer
+curl -sS https://getcomposer.org/installer | php
+mv composer.phar /usr/local/bin/composer
+chmod +x /usr/local/bin/composer
+ 
+#Self-hosted runner setup
+mkdir actions-runner && cd actions-runner
+curl -o actions-runner-linux-x64-2.320.0.tar.gz -L https://github.com/actions/runner/releases/download/v2.320.0/actions-runner-linux-x64-2.320.0.tar.gz
+tar xzf ./actions-runner-linux-x64-2.320.0.tar.gz
+ 
+sudo useradd -m -s /bin/bash github-runner
+sudo su - github-runner
+
+./config.sh --url https://github.com/Ted0011/laravel-todolist-api --token ATRWTMWM7W37SJ3R6STRBHTHGNBQQ
+./run.sh
+#Now run the pipeline
+ 
+#Mysql setup
+mysql -e "CREATE DATABASE IF NOT EXISTS todolist;"
+mysql -e "CREATE USER IF NOT EXISTS 'todolist'@'localhost' IDENTIFIED BY 'secret';"
+mysql -e "GRANT ALL PRIVILEGES ON todolist.* TO 'todolist'@'localhost';"
+mysql -e "FLUSH PRIVILEGES;"
+
+cat > /etc/nginx/sites-available/laravel-todo << 'EOF'
+server {
+    listen 80;
+    server_name _;
+    root /var/www/laravel-todo/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.2-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+EOF
+
+    # Enable the site
+    ln -sf /etc/nginx/sites-available/laravel-todo /etc/nginx/sites-enabled/
+    rm -f /etc/nginx/sites-enabled/default
+
+    # Create web directory
+    mkdir -p /var/www/laravel-todo
+    chown -R www-data:www-data /var/www/laravel-todo
+
+    # Setup GitHub Actions runner directory
+    mkdir -p /opt/actions-runner
+
+
+service mysql restart
+service nginx restart
+service php8.2-fpm restart
+service redis-server restart
+
+ 
